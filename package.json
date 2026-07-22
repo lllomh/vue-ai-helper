@@ -1,6 +1,6 @@
 {
   "name": "@lllomh/vue-ai-helper",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Schema-driven Vue 3 form, table, CRUD and API code generator",
   "repository": {
     "type": "git",
