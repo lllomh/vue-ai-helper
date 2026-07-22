@@ -1,4 +1,6 @@
 import type {
+  DataModel,
+  FieldCondition,
   FieldSchema,
   FieldType,
   InputSchema,
@@ -7,6 +9,7 @@ import type {
   Rules,
   SelectOption
 } from './types'
+import { getField } from './field-registry'
 
 const knownTypes = new Set<FieldType>([
   'string',
@@ -34,7 +37,7 @@ function normalizeType(field: FieldSchema): FieldType {
 }
 
 function normalizeOptions(field: FieldSchema): SelectOption[] {
-  if (field.options) return field.options
+  if (field.options) return [...field.options]
   return (field.enum ?? []).map((value) => ({ label: String(value), value }))
 }
 
@@ -59,7 +62,16 @@ export function normalizeSchema(schema: InputSchema): NormalizedField[] {
 }
 
 export function defaultValue(field: NormalizedField): unknown {
-  if (field.default !== undefined) return field.default
+  if (field.default !== undefined) {
+    return typeof structuredClone === 'function' ? structuredClone(field.default) : field.default
+  }
+  if (typeof field.component === 'string') {
+    const registeredDefault = getField(field.component)?.defaultValue
+    if (registeredDefault !== undefined) {
+      const value = typeof registeredDefault === 'function' ? registeredDefault() : registeredDefault
+      return typeof structuredClone === 'function' ? structuredClone(value) : value
+    }
+  }
   if (field.type === 'boolean') return false
   if (field.type === 'array') return []
   if (field.type === 'number' || field.type === 'integer') return undefined
@@ -78,7 +90,26 @@ export function createModel(
   )
 }
 
-export function generateRules(fields: NormalizedField[]): Rules {
+export function evaluateCondition(
+  condition: FieldCondition | undefined,
+  model: DataModel
+): boolean {
+  if (condition === undefined) return true
+  if (typeof condition === 'boolean') return condition
+  if (typeof condition === 'function') return condition(model)
+  return Object.entries(condition).every(([key, value]) => model[key] === value)
+}
+
+export function isFieldVisible(field: NormalizedField, model: DataModel): boolean {
+  return !field.hidden && evaluateCondition(field.visibleWhen, model)
+}
+
+export function isFieldDisabled(field: NormalizedField, model: DataModel): boolean {
+  return Boolean(field.readonly) ||
+    (field.disabledWhen !== undefined && evaluateCondition(field.disabledWhen, model))
+}
+
+export function generateRules(fields: NormalizedField[], model: DataModel = {}): Rules {
   return Object.fromEntries(
     fields.map((field) => {
       const rules: Rules[string] = []
@@ -99,6 +130,20 @@ export function generateRules(fields: NormalizedField[]): Rules {
       }
       if (field.pattern) {
         rules.push({ pattern: new RegExp(field.pattern), message: `${field.label}格式不正确`, trigger })
+      }
+      if (field.validate) {
+        rules.push({
+          message: `${field.label}校验失败`,
+          trigger,
+          async validator(_, value, callback) {
+            try {
+              const message = await field.validate?.(value, model)
+              callback(message ? new Error(message) : undefined)
+            } catch (error) {
+              callback(error instanceof Error ? error : new Error(String(error)))
+            }
+          }
+        })
       }
       return [field.key, rules]
     })

@@ -11,5 +11,5 @@
     "lib": ["ES2020", "DOM"],
     "types": ["node", "vitest/globals"]
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "tsup.config.ts"]
+  "include": ["src/**/*.ts", "tests/**/*.ts", "examples/**/*.vue", "tsup.config.ts"]
 }

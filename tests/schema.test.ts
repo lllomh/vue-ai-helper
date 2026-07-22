@@ -1,5 +1,12 @@
-import { describe, expect, it } from 'vitest'
-import { createModel, generateRules, normalizeSchema } from '../src/schema'
+import { describe, expect, it, vi } from 'vitest'
+import {
+  createModel,
+  evaluateCondition,
+  generateRules,
+  isFieldDisabled,
+  isFieldVisible,
+  normalizeSchema
+} from '../src/schema'
 
 describe('schema', () => {
   it('normalizes shorthand schema', () => {
@@ -43,5 +50,29 @@ describe('schema', () => {
       { required: true, message: '请输入Name', trigger: 'blur' },
       { min: 2, message: 'Name长度或数值范围不正确', trigger: 'blur' }
     ])
+  })
+
+  it('evaluates field linkage conditions', () => {
+    const [field] = normalizeSchema({
+      company: {
+        type: 'string',
+        visibleWhen: { accountType: 'business' },
+        disabledWhen: (model) => model.locked === true
+      }
+    })
+    expect(isFieldVisible(field, { accountType: 'business' })).toBe(true)
+    expect(isFieldVisible(field, { accountType: 'personal' })).toBe(false)
+    expect(isFieldDisabled(field, { locked: true })).toBe(true)
+    expect(evaluateCondition((model) => model.ready === 1, { ready: 1 })).toBe(true)
+  })
+
+  it('adds async custom validators', async () => {
+    const model = { code: 'taken' }
+    const fields = normalizeSchema({
+      code: { type: 'string', validate: async (value) => value === 'taken' ? '编码已存在' : undefined }
+    })
+    const callback = vi.fn()
+    await generateRules(fields, model).code[0].validator?.({}, model.code, callback)
+    expect(callback).toHaveBeenCalledWith(expect.objectContaining({ message: '编码已存在' }))
   })
 })

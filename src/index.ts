@@ -1,7 +1,16 @@
 import type { App, InjectionKey } from 'vue'
 import { generateApi } from './api'
+import { ApiError } from './api'
+import { getField, listFields, registerField, unregisterField } from './field-registry'
 import { generateCrud, generateForm, generateTable } from './runtime'
-import { createModel, generateRules, normalizeSchema } from './schema'
+import {
+  createModel,
+  evaluateCondition,
+  generateRules,
+  isFieldDisabled,
+  isFieldVisible,
+  normalizeSchema
+} from './schema'
 import type { AiAdapter, AiConfig } from './types'
 
 let adapter: AiAdapter | undefined
@@ -9,6 +18,9 @@ let adapter: AiAdapter | undefined
 export const ai = {
   configure(config: AiConfig) {
     adapter = config.adapter
+    for (const [name, definition] of Object.entries(config.fields ?? {})) {
+      registerField(name, definition)
+    }
   },
   async prompt(prompt: string, context?: Record<string, unknown>) {
     if (!adapter) {
@@ -22,7 +34,14 @@ export const ai = {
   generateApi,
   normalizeSchema,
   createModel,
-  generateRules
+  generateRules,
+  registerField,
+  unregisterField,
+  getField,
+  listFields,
+  evaluateCondition,
+  isFieldVisible,
+  isFieldDisabled
 }
 
 export type VueAiHelper = typeof ai
@@ -39,7 +58,16 @@ export const VueAiHelperPlugin = {
 export default VueAiHelperPlugin
 
 export { generateApi, generateCrud, generateForm, generateTable }
-export { createModel, generateRules, normalizeSchema }
+export { ApiError }
+export { getField, listFields, registerField, unregisterField }
+export {
+  createModel,
+  evaluateCondition,
+  generateRules,
+  isFieldDisabled,
+  isFieldVisible,
+  normalizeSchema
+}
 export type * from './types'
 
 declare module 'vue' {
