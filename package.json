@@ -1,0 +1,70 @@
+{
+  "name": "@lllomh/vue-ai-helper",
+  "version": "0.1.0",
+  "description": "Schema-driven Vue 3 form, table, CRUD and API code generator",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lllomh/vue-ai-helper.git"
+  },
+  "homepage": "https://github.com/lllomh/vue-ai-helper#readme",
+  "bugs": {
+    "url": "https://github.com/lllomh/vue-ai-helper/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "vue-tsc --noEmit",
+    "release:patch": "npm version patch",
+    "release:minor": "npm version minor",
+    "release:major": "npm version major"
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "ai",
+    "codegen",
+    "element-plus",
+    "crud",
+    "form-generator"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "element-plus": ">=2.4.0",
+    "vue": ">=3.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "element-plus": "^2.10.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0",
+    "vue": "^3.5.0",
+    "vue-tsc": "^2.2.0"
+  }
+}

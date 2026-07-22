@@ -1,0 +1,49 @@
+import type { App, InjectionKey } from 'vue'
+import { generateApi } from './api'
+import { generateCrud, generateForm, generateTable } from './runtime'
+import { createModel, generateRules, normalizeSchema } from './schema'
+import type { AiAdapter, AiConfig } from './types'
+
+let adapter: AiAdapter | undefined
+
+export const ai = {
+  configure(config: AiConfig) {
+    adapter = config.adapter
+  },
+  async prompt(prompt: string, context?: Record<string, unknown>) {
+    if (!adapter) {
+      throw new Error('尚未配置 AI adapter，请先调用 ai.configure({ adapter })。')
+    }
+    return adapter.generate(prompt, context)
+  },
+  generateForm,
+  generateTable,
+  generateCrud,
+  generateApi,
+  normalizeSchema,
+  createModel,
+  generateRules
+}
+
+export type VueAiHelper = typeof ai
+export const AI_HELPER_KEY: InjectionKey<VueAiHelper> = Symbol('vue-ai-helper')
+
+export const VueAiHelperPlugin = {
+  install(app: App, config: AiConfig = {}) {
+    ai.configure(config)
+    app.provide(AI_HELPER_KEY, ai)
+    app.config.globalProperties.$ai = ai
+  }
+}
+
+export default VueAiHelperPlugin
+
+export { generateApi, generateCrud, generateForm, generateTable }
+export { createModel, generateRules, normalizeSchema }
+export type * from './types'
+
+declare module 'vue' {
+  interface ComponentCustomProperties {
+    $ai: VueAiHelper
+  }
+}
